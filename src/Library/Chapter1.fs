@@ -1,6 +1,4 @@
 module Chapter1
-open Intro1
-open Intro1
 
 type AExpr = 
   | CstI of int
