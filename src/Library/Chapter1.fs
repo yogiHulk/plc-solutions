@@ -54,3 +54,12 @@ let e5 = Mul(e4,e3);;
 let check1 = (simplify e3) = Var "x";;
 let check2 = (simplify e4) = one;;
 let check3 = (simplify e5) = Var "x";;
+
+let rec fmtImproved e = 
+    let format ope e1 e2 = sprintf "(%s %s %s)" (fmt e1) ope (fmt e2)
+    match e with
+    | CstI x -> string x
+    | Var x -> x
+    | Add(e1, e2) -> format "+" e1 e2
+    | Mul(e1, e2) -> format "*" e1 e2
+    | Sub(e1, e2) -> format "-"  e1 e2;;

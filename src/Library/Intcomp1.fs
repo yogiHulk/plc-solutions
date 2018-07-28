@@ -56,9 +56,10 @@ let rec eval e (env : (string * int) list) : int =
 
 let run e = eval e [];;
 
+// Solution to exercise 2.1 tested here
 let e2p1 = Let([("x1", Prim("+", CstI 5, CstI 7)); ("x2", Prim("*", Var "x1", CstI 2))], Prim("+", Var "x1", Var "x2"))
 
-run e2p1;;
+let e2p1e = run e2p1;;
 (* ---------------------------------------------------------------------- *)
 
 (* Closedness *)
@@ -77,15 +78,17 @@ let rec closedin (e : Expr) (vs : string list) : bool =
     match e with
     | CstI i -> true
     | Var x  -> List.exists (fun y -> x=y) vs
-    | Let(x, erhs, ebody) -> 
-      let vs1 = x :: vs 
-      closedin erhs vs && closedin ebody vs1
+    | Let(bindings, ebody) -> 
+        let (vs1, isClosed) = 
+            List.fold (fun (st, isClosed) (x, erhs) -> 
+                    let st1 = x :: st 
+                    st1, (isClosed && closedin erhs st)) (vs, true) bindings
+        isClosed && closedin ebody vs1
     | Prim(ope, e1, e2) -> closedin e1 vs && closedin e2 vs;;
 
 (* An expression is closed if it is closed in the empty environment *)
 
 let closed1 e = closedin e [];;
-
 
 (* ---------------------------------------------------------------------- *)
 
@@ -209,15 +212,27 @@ let rec freevars e : string list =
     match e with
     | CstI i -> []
     | Var x  -> [x]
-    | Let(x, erhs, ebody) -> 
-          union (freevars erhs, minus (freevars ebody, [x]))
+    | Let(bindings, ebody) -> 
+          let freeVars, names = 
+              List.fold (fun (fvars, names) (x, erhs) ->
+                    let fvars1 = union (fvars, minus (freevars erhs, names))
+                    fvars1, (x::names)) ([], []) bindings
+          union (freeVars, minus (freevars ebody, names))
     | Prim(ope, e1, e2) -> union (freevars e1, freevars e2);;
 
 (* Alternative definition of closed *)
 
 let closed2 e = (freevars e = []);;
 
+let e1c = closed2 e1;;
+let e2c = closed2 e2;;
+let e3c = closed2 e3;;
+let e4c = closed2 e4;;
+let e5c = closed2 e5;;
 
+// Solution to exercise 2.2 tested here
+let eopen = Let(["x1", Prim("+", Var "x1", CstI 7)], Prim ("+", Var "x1", CstI 8));;
+let eopenc = closed2 eopen;;
 (* ---------------------------------------------------------------------- *)
 
 (* Compilation to target expressions with numerical indexes instead of
