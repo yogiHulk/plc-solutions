@@ -5,8 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-
+    <Compile Include="Intro1.fs" />
     <Compile Include="Intro2.fs" />
+    <Compile Include="Chapter1.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
 

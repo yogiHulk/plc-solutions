@@ -4,9 +4,9 @@
 
 module Intro1
 
-type expr = 
+type Expr = 
   | CstI of int
-  | Prim of string * expr * expr;;
+  | Prim of string * Expr * Expr;;
 
 let e1 = CstI 17;;
 
@@ -17,7 +17,7 @@ let e3 = Prim("+", Prim("*", CstI 7, CstI 9), CstI 10);;
 
 (* Evaluating expressions using recursive functions *)
 
-let rec eval (e : expr) : int =
+let rec eval (e : Expr) : int =
     match e with
     | CstI i -> i
     | Prim("+", e1, e2) -> eval e1 + eval e2
@@ -32,7 +32,7 @@ let e3v = eval e3;;
 
 (* Changing the meaning of subtraction *)
 
-let rec evalm (e : expr) : int =
+let rec evalm (e : Expr) : int =
     match e with
     | CstI i -> i
     | Prim("+", e1, e2) -> evalm e1 + evalm e2
