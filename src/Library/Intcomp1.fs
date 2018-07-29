@@ -212,12 +212,12 @@ let rec freevars e : string list =
     match e with
     | CstI i -> []
     | Var x  -> [x]
-    | Let(bindings, ebody) -> 
-          let freeVars, names = 
-              List.fold (fun (fvars, names) (x, erhs) ->
-                    let fvars1 = union (fvars, minus (freevars erhs, names))
-                    fvars1, (x::names)) ([], []) bindings
-          union (freeVars, minus (freevars ebody, names))
+    | Let([], ebody) -> 
+        failwith "no let bindings provided!"
+    | Let([(x,erhs)], ebody) -> 
+        union (freevars erhs, minus (freevars ebody, [x]))
+    | Let((x,erhs)::bindings, ebody) -> 
+        union (freevars erhs, minus (freevars (Let(bindings,ebody)), [x]))
     | Prim(ope, e1, e2) -> union (freevars e1, freevars e2);;
 
 (* Alternative definition of closed *)
