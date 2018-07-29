@@ -238,11 +238,11 @@ let eopenc = closed2 eopen;;
 (* Compilation to target expressions with numerical indexes instead of
    symbolic variable names.  *)
 
-type texpr =                            (* target expressions *)
+type TExpr =                            (* target expressions *)
   | TCstI of int
   | TVar of int                         (* index into runtime environment *)
-  | TLet of texpr * texpr               (* erhs and ebody                 *)
-  | TPrim of string * texpr * texpr;;
+  | TLet of TExpr * TExpr               (* erhs and ebody                 *)
+  | TPrim of string * TExpr * TExpr;;
 
 
 (* Map variable name to variable index at compile-time *)
@@ -254,19 +254,23 @@ let rec getindex vs x =
 
 (* Compiling from expr to texpr *)
 
-let rec tcomp (e : Expr) (cenv : string list) : texpr =
+let rec tcomp (e : Expr) (cenv : string list) : TExpr =
     match e with
     | CstI i -> TCstI i
     | Var x  -> TVar (getindex cenv x)
-    | Let(x, erhs, ebody) -> 
-      let cenv1 = x :: cenv 
+    | Let([], ebody) -> failwith "no let bindings provided"
+    | Let([x,erhs], ebody) ->
+      let cenv1 = x :: cenv
       TLet(tcomp erhs cenv, tcomp ebody cenv1)
+    | Let((x,erhs)::bindings, ebody) -> 
+      let cenv1 = x :: cenv
+      TLet(tcomp erhs cenv, tcomp (Let(bindings,ebody)) cenv1)
     | Prim(ope, e1, e2) -> TPrim(ope, tcomp e1 cenv, tcomp e2 cenv);;
 
 (* Evaluation of target expressions with variable indexes.  The
    run-time environment renv is a list of variable values (ints).  *)
 
-let rec teval (e : texpr) (renv : int list) : int =
+let rec teval (e : TExpr) (renv : int list) : int =
     match e with
     | TCstI i -> i
     | TVar n  -> List.item n renv
@@ -281,7 +285,13 @@ let rec teval (e : texpr) (renv : int list) : int =
 
 (* Correctness: eval e []  equals  teval (tcomp e []) [] *)
 
-
+let checkExercise3 e =  eval e [] = teval (tcomp e []) [];;
+let tc1 = checkExercise3 e1;;
+let tc2 = checkExercise3 e2;;
+let tc3 = checkExercise3 e3;;
+let tc4 = checkExercise3 e4;;
+let tc5 = checkExercise3 e5;;
+let tc2p1 = checkExercise3 e2p1;;
 (* ---------------------------------------------------------------------- *)
 
 (* Stack machines *)
