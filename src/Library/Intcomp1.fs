@@ -7,6 +7,11 @@
 
 module Intcomp1
 
+// Note - I used "Let of (string * Expr) list * Expr" in the type since it was suggested in the book
+// This requires handling Let([], ebody) case with a failure in the functions below
+// A way to make this code safe would be -
+// type Assignment = (string * Expr)
+// Let of Assignment * (Assignment list) * Expr
 type Expr = 
   | CstI of int
   | Var of string
@@ -364,6 +369,17 @@ let rec seval (inss : SinStr list) (stack : int list) =
     | (SSwap   :: insr, i2::i1::stkr) -> seval insr (i1::i2::stkr)
     | _ -> failwith "seval: too few operands on stack";;
 
+let assemble (inss : SinStr list): int list = 
+    let toByteCode = 
+        function
+        | SCstI i   -> [0;i]
+        | SVar x    -> [1;x]
+        | SAdd      -> [2]
+        | SSub      -> [3]
+        | SMul      -> [4]
+        | SPop      -> [5]
+        | SSwap     -> [6]
+    inss |> List.collect toByteCode    
 
 (* A compile-time variable environment representing the state of
    the run-time stack. *)
@@ -378,8 +394,11 @@ let rec scomp (e : Expr) (cenv : StackValue list) : SinStr list =
     match e with
     | CstI i -> [SCstI i]
     | Var x  -> [SVar (getindex cenv (Bound x))]
-    | Let(x, erhs, ebody) -> 
+    | Let([], _) -> failwith "nothing to bind!"
+    | Let([(x,erhs)], ebody) ->
           scomp erhs cenv @ scomp ebody (Bound x :: cenv) @ [SSwap; SPop]
+    | Let((x, erhs)::bindings, ebody) -> 
+          scomp erhs cenv @ scomp (Let(bindings,ebody)) (Bound x :: cenv) @ [SSwap; SPop]
     | Prim("+", e1, e2) -> 
           scomp e1 cenv @ scomp e2 (Value :: cenv) @ [SAdd] 
     | Prim("-", e1, e2) -> 
@@ -388,10 +407,20 @@ let rec scomp (e : Expr) (cenv : StackValue list) : SinStr list =
           scomp e1 cenv @ scomp e2 (Value :: cenv) @ [SMul] 
     | Prim _ -> failwith "scomp: unknown operator";;
 
+// Solution to Exercise 2.4
+let compiler (e : Expr) : int list = 
+    scomp e [] 
+    |> assemble
+
 let s1 = scomp e1 [];;
 let s2 = scomp e2 [];;
 let s3 = scomp e3 [];;
 let s5 = scomp e5 [];;
+
+let c1 = compiler e1;;
+let c2 = compiler e2;;
+let c3 = compiler e3;;
+let c5 = compiler e5;;
 
 (* Output the integers in list inss to the text file called fname: *)
 
