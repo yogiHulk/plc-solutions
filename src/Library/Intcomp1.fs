@@ -59,12 +59,37 @@ let rec eval e (env : (string * int) list) : int =
     | Prim("-", e1, e2) -> eval e1 env - eval e2 env
     | Prim _            -> failwith "unknown primitive";;
 
-let run e = eval e [];;
+// Solution to Exercise 2.6
 
+let rec eval2 e (env : (string * int) list) : int =
+    match e with
+    | CstI i            -> i
+    | Var x             -> lookup env x 
+    | Let([], ebody) -> failwith "nothing to bind!"
+    | Let(bindings, ebody) ->   
+      let env1 = 
+          List.fold (fun currEnv (x,erhs) -> 
+            // the only change is replacing currEnv with env, so there are no effects of the previous bindings
+            let xval = eval2 erhs env  
+            (x, xval) :: currEnv) env bindings
+      eval2 ebody env1
+    | Prim("+", e1, e2) -> eval2 e1 env + eval2 e2 env
+    | Prim("*", e1, e2) -> eval2 e1 env * eval2 e2 env
+    | Prim("-", e1, e2) -> eval2 e1 env - eval2 e2 env
+    | Prim _            -> failwith "unknown primitive";;
+
+let run e = eval e [];;
+let run2 e = eval2 e [];;
 // Solution to exercise 2.1 tested here
 let e2p1 = Let([("x1", Prim("+", CstI 5, CstI 7)); ("x2", Prim("*", Var "x1", CstI 2))], Prim("+", Var "x1", Var "x2"))
 
 let e2p1e = run e2p1;;
+
+// Solution to exercise 2.6 tested here
+let esimul = Let(["x", CstI 11], 
+                    Let([("x", CstI 22); ("y", Prim("+", Var "x", CstI 1))], 
+                        Prim("+", Var "x", Var "y")));;
+let esimulr = run2 esimul;;
 (* ---------------------------------------------------------------------- *)
 
 (* Closedness *)
